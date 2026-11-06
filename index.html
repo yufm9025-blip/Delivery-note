@@ -1,65 +1,85 @@
-<!-- ... existing code ... -->
-            <!-- 品項表格 (固定高度與緊湊排版) -->
-            <div class="overflow-x-auto min-h-[260px] max-h-[260px]">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-slate-800 text-white border-b border-slate-900">
-                            <th class="py-2 px-2 font-semibold w-8 text-center">項</th>
-                            <th class="py-2 px-2 font-semibold w-24">品項分類</th>
-                            <th class="py-2 px-2 font-semibold w-24">尺寸/規格</th>
-                            <th class="py-2 px-2 font-semibold w-20">長度 (M)</th>
-                            <th class="py-2 px-2 font-semibold w-16 text-center">數量</th>
-                            <th class="py-2 px-2 font-semibold">合符國際標準 (Standard)</th>
-                            <th class="no-print py-2 px-2 font-semibold w-10 text-center">刪除</th>
-                        </tr>
-                    </thead>
-                    <tbody id="items-table-body" class="divide-y divide-slate-200">
-                        <!-- 動態插入列 -->
-                    </tbody>
-                </table>
-            </div>
+        // 品項資料陣列
+        let items = [
+            { type: '喉管 (Pipe)', size: '25mm', length: 6, qty: 10, standard: 'BS EN 1057 (Copper)' },
+            { type: '90° Elbow', size: '25mm', length: '-', qty: 25, standard: 'BS EN 1254-1' },
+            { type: 'Tee', size: '25mm', length: '-', qty: 10, standard: 'BS EN 1254-1' },
+            { type: 'Socket', size: '25mm', length: '-', qty: 15, standard: 'BS EN 1254-1' },
+            { type: 'Union', size: '25mm', length: '-', qty: 5, standard: 'BS 864 / BS EN 1254' }
+        ];
 
-            <!-- 把「新增品項」按鈕直接放入預覽區底部 -->
-            <div class="no-print mt-2 flex justify-center">
-                <button onclick="addItem()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
-                    <i class="fa-solid fa-plus"></i> 新增品項 (Add Item)
-                </button>
-            </div>
-        </div>
+        // 監聽品項類別變更，若選非喉管則自動將長度設為 "-" 並且停用
+        function handleTypeChange(selectElem, index) {
+            const val = selectElem.value;
+            items[index].type = val;
+            const lengthInput = document.getElementById(`length-input-${index}`);
+            if (val !== '喉管 (Pipe)') {
+                items[index].length = '-';
+                lengthInput.value = '-';
+                lengthInput.disabled = true;
+                lengthInput.classList.add('bg-slate-100', 'text-slate-400');
+            } else {
+                items[index].length = 6;
+                lengthInput.value = 6;
+                lengthInput.disabled = false;
+                lengthInput.classList.remove('bg-slate-100', 'text-slate-400');
+            }
+        }
 
-        <!-- 頁尾署名與簽收區 (支援圖檔簽名上傳與自動縮放) -->
-        <div class="border-t-2 border-slate-800 pt-3 mt-auto">
-<!-- ... existing code ... -->
-    <!-- 頂部控制與工具列 (改為純 Word 下載) -->
-    <div class="no-print w-full max-w-[210mm] bg-white rounded-xl shadow-md p-4 mb-4 border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div>
-            <h1 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-file-word text-blue-600"></i> 星爾 (Carswell) FTS 煤氣送貨單 (Word 產生器)
-            </h1>
-            <p class="text-xs text-slate-500">所有操作直接在預覽畫面完成，點擊下方按鈕即可匯出單頁 A4 規格的 Word 檔案。</p>
-        </div>
-        <div class="flex items-center gap-2">
-            <button onclick="saveAsWord()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
-                <i class="fa-solid fa-file-arrow-down"></i> 下載 Word 檔案 (.doc)
-            </button>
-        </div>
-    </div>
+        // 渲染品項表格 (包含所見即所得的互動輸入與刪除按鈕)
+        function renderTable() {
+            const tbody = document.getElementById('items-table-body');
+            tbody.innerHTML = '';
 
-    <!-- A4 單頁畫布區 (完美單頁高度控制) -->
-    <div id="print-area" class="a4-sheet p-8 flex flex-col justify-between text-slate-900 relative overflow-hidden">
-<!-- ... existing code ... -->
-        // 簽名圖檔上傳與自動縮放適配
-        function handleSignatureUpload(event, imgId, textId) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById(imgId);
-                    const txt = document.getElementById(textId);
-                    img.src = e.target.result;
-                    img.classList.remove('hidden');
-                    txt.classList.add('hidden');
-                }
+            items.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                
+                const isPipe = item.type === '喉管 (Pipe)';
+
+                tr.innerHTML = `
+                    <td class="py-1.5 px-2 text-center font-mono text-slate-500">${index + 1}</td>
+                    <td class="py-1.5 px-2">
+                        <select onchange="handleTypeChange(this, ${index})" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none">
+                            <option value="喉管 (Pipe)" ${item.type === '喉管 (Pipe)' ? 'selected' : ''}>喉管 (Pipe)</option>
+                            <option value="90° Elbow" ${item.type === '90° Elbow' ? 'selected' : ''}>90° Elbow</option>
+                            <option value="Tee" ${item.type === 'Tee' ? 'selected' : ''}>Tee</option>
+                            <option value="Socket" ${item.type === 'Socket' ? 'selected' : ''}>Socket</option>
+                            <option value="Union" ${item.type === 'Union' ? 'selected' : ''}>Union</option>
+                        </select>
+                    </td>
+                    <td class="py-1.5 px-2">
+                        <select onchange="updateItem(${index}, 'size', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none">
+                            <option value="15mm" ${item.size === '15mm' ? 'selected' : ''}>15mm</option>
+                            <option value="20mm" ${item.size === '20mm' ? 'selected' : ''}>20mm</option>
+                            <option value="25mm" ${item.size === '25mm' ? 'selected' : ''}>25mm</option>
+                            <option value="80mm" ${item.size === '80mm' ? 'selected' : ''}>80mm</option>
+                            <option value="100mm" ${item.size === '100mm' ? 'selected' : ''}>100mm</option>
+                        </select>
+                    </td>
+                    <td class="py-1.5 px-2">
+                        <input id="length-input-${index}" type="text" value="${item.length}" ${!isPipe ? 'disabled' : ''} onchange="updateItem(${index}, 'length', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 outline-none ${!isPipe ? 'bg-slate-100 text-slate-400' : ''}" />
+                    </td>
+                    <td class="py-1.5 px-2">
+                        <input type="number" min="1" value="${item.qty}" onchange="updateItem(${index}, 'qty', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 outline-none font-semibold" />
+                    </td>
+                    <td class="py-1.5 px-2">
+                        <input type="text" value="${item.standard}" placeholder="例如: BS EN 1057" onchange="updateItem(${index}, 'standard', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none" />
+                    </td>
+                    <td class="no-print py-1.5 px-2 text-center">
+                        <button onclick="deleteItem(${index})" class="text-rose-500 hover:text-rose-700 p-1 rounded transition" title="刪除此項">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 新增品項
+        function addItem() {
+            items.push({ type: '90° Elbow', size: '25mm', length: '-', qty: 1, standard: 'BS EN 1254-1' });
+            renderTable();
+        }
                 reader.readAsDataURL(file);
             }
         }
