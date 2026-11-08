@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星爾 FTS 地盤煤氣送貨單生成器</title>
+    <title>Carswell FTS Delivery Note Generator</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
         @media print {
             .no-print {
@@ -32,155 +32,153 @@
 </head>
 <body class="bg-slate-100 min-h-screen py-8 px-4 flex flex-col items-center">
 
-    <!-- 頂部操作控制列 (僅供網頁操作，不影響 Word 內容) -->
+    <!-- Top Control Bar (Web operation only, excluded from Word content) -->
     <div class="no-print w-full max-w-[210mm] bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6 flex flex-wrap justify-between items-center gap-4">
         <div>
             <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-file-invoice text-blue-600"></i> 星爾 FTS 送貨單生成系統
+                <i class="fa-solid fa-file-invoice text-blue-600"></i> Carswell FTS Delivery Note System
             </h1>
-            <p class="text-xs text-slate-500">所有修改即時反映於預覽畫布中，編輯完成後可直接一鍵匯出 Word 單頁檔案。</p>
+            <p class="text-xs text-slate-500">All modifications update instantly on the preview canvas. Export as a single-page Word document when ready.</p>
         </div>
         <div class="flex items-center gap-3">
             <button onclick="resetData()" class="px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition flex items-center gap-1.5">
-                <i class="fa-solid fa-rotate-right"></i> 重設預設值
+                <i class="fa-solid fa-rotate-right"></i> Reset Defaults
             </button>
             <button onclick="saveAsWord()" class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition flex items-center gap-2">
-                <i class="fa-solid fa-file-word text-sm"></i> 下載 Word 檔案 (.doc)
+                <i class="fa-solid fa-file-word text-sm"></i> Download Word File (.doc)
             </button>
         </div>
     </div>
 
-    <!-- A4 預覽畫布本體 -->
+    <!-- A4 Preview Canvas -->
     <div class="a4-page w-full max-w-[210mm] bg-white shadow-xl rounded-sm p-10 box-border text-slate-800 relative flex flex-col justify-between" style="min-height: 297mm;">
         
-        <!-- 內容頂部區 -->
+        <!-- Top Section -->
         <div>
-            <!-- 公司抬頭與單號 -->
+            <!-- Company Header & DN Number -->
             <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-6">
                 <div>
-                    <h2 class="text-2xl font-black tracking-wide text-slate-900">星爾國際有限公司</h2>
-                    <p class="text-xs font-bold text-blue-600 tracking-wider">CARSWELL INTERNATIONAL LIMITED</p>
-                    <p class="text-[11px] text-slate-500 mt-0.5">香港中華煤氣指定承建商 (Towngas Sub-contractor)</p>
+                    <h2 class="text-2xl font-black tracking-wide text-slate-900">CARSWELL INTERNATIONAL LIMITED</h2>
+                    <p class="text-xs font-bold text-blue-600 tracking-wider">星爾國際有限公司</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Towngas Authorized Sub-contractor</p>
                 </div>
                 <div class="text-right">
-                    <h1 class="text-xl font-bold text-slate-800">送 貨 單</h1>
-                    <p class="text-xs text-slate-500 font-medium">DELIVERY NOTE</p>
+                    <h1 class="text-xl font-bold text-slate-800">DELIVERY NOTE</h1>
+                    <p class="text-xs text-slate-500 font-medium">送 貨 單</p>
                     <div class="mt-2 flex items-center justify-end gap-1.5">
-                        <span class="text-xs font-semibold text-slate-600">單號 No:</span>
+                        <span class="text-xs font-semibold text-slate-600">No:</span>
                         <input type="text" id="global-dn" value="CS-FTS-2026-0301" class="border border-slate-300 rounded px-2 py-0.5 text-xs font-mono font-bold w-36 text-right bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-blue-500">
                     </div>
                 </div>
             </div>
 
-            <!-- 地點與日期資訊區 -->
+            <!-- Destination & Date Info Box -->
             <div class="grid grid-cols-2 gap-4 bg-slate-50/70 p-4 rounded-lg border border-slate-200 mb-6 text-xs">
                 <div>
-                    <p class="font-bold text-slate-700 mb-1"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> 送貨地點 (Delivery Destination):</p>
-                    <p class="text-slate-800 font-medium">發祥街地盤 (FTS Site)</p>
-                    <p class="text-slate-500 text-[11px] mt-0.5">香港九龍發祥街煤氣工程工地</p>
-                    <p class="text-slate-500 text-[11px]">項目性質: 煤氣喉管與配件安裝工程</p>
+                    <p class="font-bold text-slate-700 mb-1"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> Delivery Destination:</p>
+                    <p class="text-slate-800 font-medium">FTS Site (發祥街地盤)</p>
+                    <p class="text-slate-500 text-[11px] mt-0.5 leading-relaxed">Towngas Installation at Proposed Composite Development at J9163 – Proposed Commercial and Residential Development at 1 Fat Tseung Street, Kowloon</p>
                 </div>
                 <div class="flex flex-col justify-between items-end">
                     <div class="space-y-1 text-right w-full">
                         <div class="flex items-center justify-end gap-2">
-                            <span class="font-semibold text-slate-600">送貨日期:</span>
+                            <span class="font-semibold text-slate-600">Delivery Date:</span>
                             <input type="date" id="global-date" value="2026-06-07" class="border border-slate-300 rounded px-2 py-0.5 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500">
                         </div>
                         <div class="flex items-center justify-end gap-2">
-                            <span class="font-semibold text-slate-600">送貨時間:</span>
+                            <span class="font-semibold text-slate-600">Delivery Time:</span>
                             <input type="time" id="global-time" value="09:30" class="border border-slate-300 rounded px-2 py-0.5 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 品項清單表格 (所見即所得直接編輯) -->
+            <!-- Items Table (WYSIWYG Editing) -->
             <div class="mb-6">
                 <table class="w-full text-xs border-collapse border border-slate-300">
                     <thead>
                         <tr class="bg-slate-900 text-white text-center">
-                            <th class="py-2 px-1 border border-slate-700 w-10">項</th>
-                            <th class="py-2 px-2 border border-slate-700 w-28 text-left">品項分類</th>
-                            <th class="py-2 px-2 border border-slate-700 w-24 text-left">尺寸/規格</th>
-                            <th class="py-2 px-2 border border-slate-700 w-20">長度 (M)</th>
-                            <th class="py-2 px-2 border border-slate-700 w-16">數量</th>
-                            <th class="py-2 px-2 border border-slate-700 text-left">合符國際標準 (Standard)</th>
-                            <th class="no-print py-2 px-1 border border-slate-700 w-12">操作</th>
+                            <th class="py-2 px-1 border border-slate-700 w-10">Item</th>
+                            <th class="py-2 px-2 border border-slate-700 w-28 text-left">Category</th>
+                            <th class="py-2 px-2 border border-slate-700 w-24 text-left">Size / Spec</th>
+                            <th class="py-2 px-2 border border-slate-700 w-20">Length (M)</th>
+                            <th class="py-2 px-2 border border-slate-700 w-16">Qty</th>
+                            <th class="py-2 px-2 border border-slate-700 text-left">International Standard</th>
+                            <th class="no-print py-2 px-1 border border-slate-700 w-12">Action</th>
                         </tr>
                     </thead>
                     <tbody id="items-table-body">
-                        <!-- 動態生成 -->
+                        <!-- Dynamically generated -->
                     </tbody>
                 </table>
 
-                <!-- 內嵌於預覽畫布中的新增品項按鈕 -->
+                <!-- Add Item Button inside preview canvas -->
                 <div class="no-print mt-2">
                     <button onclick="addItem()" class="w-full py-2 border-2 border-dashed border-slate-300 hover:border-blue-500 text-slate-600 hover:text-blue-600 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 bg-slate-50/50">
-                        <i class="fa-solid fa-circle-plus"></i> 新增送貨品項 (Add Item)
+                        <i class="fa-solid fa-circle-plus"></i> Add Delivery Item
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- 底部簽名區 (工程師與收貨人) -->
+        <!-- Bottom Signatures Section -->
         <div>
             <div class="grid grid-cols-2 gap-6 pt-4 border-t border-slate-200">
-                <!-- 發貨人 / 工程師 -->
+                <!-- Issued by / Engineer -->
                 <div class="border border-slate-300 rounded-lg p-3 bg-slate-50/50 flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-center mb-2">
-                            <span class="font-bold text-slate-700 text-xs">發貨人 / 工程師 (Issued by)</span>
+                            <span class="font-bold text-slate-700 text-xs">Issued by / Engineer</span>
                             <label class="no-print text-[11px] text-blue-600 hover:underline cursor-pointer flex items-center gap-1">
-                                <i class="fa-solid fa-signature"></i> 上傳簽名
+                                <i class="fa-solid fa-signature"></i> Upload Signature
                                 <input type="file" accept="image/*" class="hidden" onchange="uploadSignature(event, 'eng')">
                             </label>
                         </div>
                         <div class="text-xs text-slate-600 space-y-1 mb-3">
-                            <p>公司: 星爾國際有限公司</p>
-                            <p>姓名: 陳工程師 (Chan Eng)</p>
+                            <p>Company: Carswell International Limited</p>
+                            <p>Name: K.W. Chan (Engineer)</p>
                         </div>
                     </div>
                     <div class="border-t border-dashed border-slate-300 pt-2 h-14 flex items-center justify-center relative">
-                        <span id="eng-sig-placeholder" class="text-slate-400 text-[11px] italic">K.W. Chan (預設簽署)</span>
+                        <span id="eng-sig-placeholder" class="text-slate-400 text-[11px] italic">K.W. Chan (Default Signature)</span>
                         <img id="eng-sig-img" class="max-h-12 max-w-full hidden object-contain" alt="Engineer Signature">
                     </div>
                 </div>
 
-                <!-- 收貨人 / 地盤代表 -->
+                <!-- Received by / Site Representative -->
                 <div class="border border-slate-300 rounded-lg p-3 bg-slate-50/50 flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-center mb-2">
-                            <span class="font-bold text-slate-700 text-xs">收貨人 / 地盤代表 (Received by)</span>
+                            <span class="font-bold text-slate-700 text-xs">Received by / Site Representative</span>
                             <label class="no-print text-[11px] text-blue-600 hover:underline cursor-pointer flex items-center gap-1">
-                                <i class="fa-solid fa-signature"></i> 上傳簽名
+                                <i class="fa-solid fa-signature"></i> Upload Signature
                                 <input type="file" accept="image/*" class="hidden" onchange="uploadSignature(event, 'rec')">
                             </label>
                         </div>
                         <div class="text-xs text-slate-600 space-y-1 mb-3">
-                            <p>地盤: 發祥街地盤 (FTS Site)</p>
-                            <p>代表: ____________________</p>
+                            <p>Site: FTS Site (發祥街地盤)</p>
+                            <p>Representative: ____________________</p>
                         </div>
                     </div>
                     <div class="border-t border-dashed border-slate-300 pt-2 h-14 flex items-center justify-center relative">
-                        <span id="rec-sig-placeholder" class="text-slate-400 text-[11px] italic">請上傳或簽署</span>
+                        <span id="rec-sig-placeholder" class="text-slate-400 text-[11px] italic">Please sign or upload</span>
                         <img id="rec-sig-img" class="max-h-12 max-w-full hidden object-contain" alt="Receiver Signature">
                     </div>
                 </div>
             </div>
 
-            <!-- 頁尾備註 -->
+            <!-- Footer note -->
             <div class="mt-6 pt-3 border-t border-slate-200 text-center text-[10px] text-slate-400">
-                本單據由星爾國際有限公司 (Carswell International Limited) 系統自動生成 • 適用於香港中華煤氣 FTS 地盤工程項目
+                This document is automatically generated by Carswell International Limited System • Applicable to Towngas FTS Site Project
             </div>
         </div>
 
     </div>
 
-    <!-- JavaScript 邏輯控制 -->
+    <!-- JavaScript Control Logic -->
     <script>
-        // 品項預設資料
         let defaultItems = [
-            { type: '喉管 (Pipe)', size: '25mm', length: 6, qty: 10, standard: 'BS EN 1057 (Copper)' },
+            { type: 'Pipe', size: '25mm', length: 6, qty: 10, standard: 'BS EN 1057 (Copper)' },
             { type: '90° Elbow', size: '25mm', length: '-', qty: 25, standard: 'BS EN 1254-1' },
             { type: 'Tee', size: '25mm', length: '-', qty: 10, standard: 'BS EN 1254-1' },
             { type: 'Socket', size: '25mm', length: '-', qty: 15, standard: 'BS EN 1254-1' },
@@ -189,7 +187,6 @@
 
         let items = JSON.parse(JSON.stringify(defaultItems));
 
-        // 渲染品項表格
         function renderTable() {
             const tbody = document.getElementById('items-table-body');
             tbody.innerHTML = '';
@@ -198,13 +195,13 @@
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50/80 transition';
                 
-                const isPipe = item.type === '喉管 (Pipe)';
+                const isPipe = item.type === 'Pipe';
 
                 tr.innerHTML = `
                     <td class="py-1.5 px-1 border border-slate-200 text-center font-mono text-slate-500 text-[11px]">${index + 1}</td>
                     <td class="py-1.5 px-2 border border-slate-200">
                         <select onchange="handleTypeChange(this, ${index})" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none">
-                            <option value="喉管 (Pipe)" ${item.type === '喉管 (Pipe)' ? 'selected' : ''}>喉管 (Pipe)</option>
+                            <option value="Pipe" ${item.type === 'Pipe' ? 'selected' : ''}>Pipe</option>
                             <option value="90° Elbow" ${item.type === '90° Elbow' ? 'selected' : ''}>90° Elbow</option>
                             <option value="Tee" ${item.type === 'Tee' ? 'selected' : ''}>Tee</option>
                             <option value="Socket" ${item.type === 'Socket' ? 'selected' : ''}>Socket</option>
@@ -227,10 +224,10 @@
                         <input type="number" min="1" value="${item.qty}" onchange="updateItem(${index}, 'qty', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs text-center font-semibold focus:ring-1 focus:ring-blue-500 outline-none" />
                     </td>
                     <td class="py-1.5 px-2 border border-slate-200">
-                        <input type="text" value="${item.standard}" placeholder="例如: BS EN 1254-1" onchange="updateItem(${index}, 'standard', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none" />
+                        <input type="text" value="${item.standard}" placeholder="e.g. BS EN 1254-1" onchange="updateItem(${index}, 'standard', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none" />
                     </td>
                     <td class="no-print py-1.5 px-1 border border-slate-200 text-center">
-                        <button onclick="deleteItem(${index})" class="text-rose-500 hover:text-rose-700 p-1 rounded transition" title="刪除此項">
+                        <button onclick="deleteItem(${index})" class="text-rose-500 hover:text-rose-700 p-1 rounded transition" title="Delete item">
                             <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
                     </td>
@@ -239,12 +236,11 @@
             });
         }
 
-        // 處理品項類型變更
         function handleTypeChange(selectElem, index) {
             const val = selectElem.value;
             items[index].type = val;
             const lengthInput = document.getElementById(`length-input-${index}`);
-            if (val !== '喉管 (Pipe)') {
+            if (val !== 'Pipe') {
                 items[index].length = '-';
                 if (lengthInput) {
                     lengthInput.value = '-';
@@ -261,18 +257,15 @@
             }
         }
 
-        // 更新單一欄位值
         function updateItem(index, field, value) {
             items[index][field] = value;
         }
 
-        // 新增品項
         function addItem() {
             items.push({ type: '90° Elbow', size: '25mm', length: '-', qty: 1, standard: 'BS EN 1254-1' });
             renderTable();
         }
 
-        // 刪除品項
         function deleteItem(index) {
             if (items.length <= 1) {
                 return;
@@ -281,14 +274,12 @@
             renderTable();
         }
 
-        // 重設資料
         function resetData() {
             items = JSON.parse(JSON.stringify(defaultItems));
             document.getElementById('global-dn').value = 'CS-FTS-2026-0301';
             renderTable();
         }
 
-        // 上傳簽名圖片
         function uploadSignature(event, target) {
             const file = event.target.files[0];
             if (file) {
@@ -304,7 +295,6 @@
             }
         }
 
-        // 生成單頁 A4 Word 檔案 (.doc)
         function saveAsWord() {
             const dn = document.getElementById('global-dn').value || 'CS-FTS-2026-0301';
             const dateStr = document.getElementById('global-date').value;
@@ -326,12 +316,12 @@
 
             let engImgSrc = document.getElementById('eng-sig-img').src;
             let engHtml = document.getElementById('eng-sig-img').classList.contains('hidden') ? 
-                          '<span style="font-style: italic; color: #64748b;">K.W. Chan (預設簽署)</span>' : 
+                          '<span style="font-style: italic; color: #64748b;">K.W. Chan (Default Signature)</span>' : 
                           `<img src="${engImgSrc}" style="max-height: 40px; max-width: 140px;" />`;
 
             let recImgSrc = document.getElementById('rec-sig-img').src;
             let recHtml = document.getElementById('rec-sig-img').classList.contains('hidden') ? 
-                          '<span style="color: #94a3b8;">未簽署</span>' : 
+                          '<span style="color: #94a3b8;">Unsigned</span>' : 
                           `<img src="${recImgSrc}" style="max-height: 40px; max-width: 140px;" />`;
 
             const wordContent = `
@@ -349,7 +339,7 @@
                             page: Section1;
                         }
                         body {
-                            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+                            font-family: 'Arial', sans-serif;
                             font-size: 11pt;
                             color: #1e293b;
                         }
@@ -370,47 +360,46 @@
                 </head>
                 <body>
                     <div class="Section1">
-                        <!-- 標題 -->
+                        <!-- Header -->
                         <table style="border: none; margin-bottom: 15px;">
                             <tr style="border: none;">
                                 <td style="border: none; width: 70%;">
-                                    <h2 style="margin: 0; color: #1e293b; font-size: 16pt;">星爾國際有限公司</h2>
-                                    <p style="margin: 2px 0; color: #2563eb; font-weight: bold; font-size: 9pt;">CARSWELL INTERNATIONAL LIMITED</p>
-                                    <p style="margin: 0; color: #64748b; font-size: 8pt;">香港中華煤氣指定承建商 (Towngas Sub-contractor)</p>
+                                    <h2 style="margin: 0; color: #1e293b; font-size: 16pt;">CARSWELL INTERNATIONAL LIMITED</h2>
+                                    <p style="margin: 2px 0; color: #2563eb; font-weight: bold; font-size: 9pt;">星爾國際有限公司</p>
+                                    <p style="margin: 0; color: #64748b; font-size: 8pt;">Towngas Authorized Sub-contractor</p>
                                 </td>
                                 <td style="border: none; text-align: right; width: 30%;">
-                                    <h1 style="margin: 0; font-size: 16pt;">送貨單</h1>
-                                    <p style="margin: 2px 0; font-size: 9pt; color: #475569;">DELIVERY NOTE</p>
-                                    <p style="margin: 0; font-size: 9pt; font-family: monospace;">單號 No: ${dn}</p>
+                                    <h1 style="margin: 0; font-size: 16pt;">DELIVERY NOTE</h1>
+                                    <p style="margin: 2px 0; font-size: 9pt; color: #475569;">送貨單</p>
+                                    <p style="margin: 0; font-size: 9pt; font-family: monospace;">No: ${dn}</p>
                                 </td>
                             </tr>
                         </table>
 
-                        <!-- 資訊框 -->
+                        <!-- Info Box -->
                         <table style="background-color: #f8fafc; margin-bottom: 15px;">
                             <tr style="border: none;">
                                 <td style="border: none; width: 55%; vertical-align: top; padding: 10px;">
-                                    <b>送貨地點:</b> 發祥街地盤 (FTS Site)<br>
-                                    <b>地盤地址:</b> 香港九龍發祥街煤氣工程工地<br>
-                                    <b>項目性質:</b> 煤氣喉管與配件安裝工程
+                                    <b>Delivery Destination:</b> FTS Site (發祥街地盤)<br>
+                                    <span style="font-size: 8.5pt; color: #475569; line-height: 1.3;">Towngas Installation at Proposed Composite Development at J9163 – Proposed Commercial and Residential Development at 1 Fat Tseung Street, Kowloon</span>
                                 </td>
                                 <td style="border: none; width: 45%; vertical-align: top; text-align: right; padding: 10px;">
-                                    <b>送貨日期:</b> ${dateStr}<br>
-                                    <b>送貨時間:</b> ${timeStr}
+                                    <b>Delivery Date:</b> ${dateStr}<br>
+                                    <b>Delivery Time:</b> ${timeStr}
                                 </td>
                             </tr>
                         </table>
 
-                        <!-- 品項表格 -->
+                        <!-- Items Table -->
                         <table style="margin-bottom: 25px;">
                             <thead>
                                 <tr>
-                                    <th style="width: 35px; text-align: center;">項</th>
-                                    <th style="width: 100px;">品項分類</th>
-                                    <th style="width: 80px;">尺寸/規格</th>
-                                    <th style="width: 70px; text-align: center;">長度 (M)</th>
-                                    <th style="width: 55px; text-align: center;">數量</th>
-                                    <th>合符國際標準 (Standard)</th>
+                                    <th style="width: 35px; text-align: center;">Item</th>
+                                    <th style="width: 100px;">Category</th>
+                                    <th style="width: 80px;">Size / Spec</th>
+                                    <th style="width: 70px; text-align: center;">Length (M)</th>
+                                    <th style="width: 55px; text-align: center;">Qty</th>
+                                    <th>International Standard</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -418,19 +407,19 @@
                             </tbody>
                         </table>
 
-                        <!-- 簽名區 -->
+                        <!-- Signature Section -->
                         <table style="border: none; margin-top: 30px;">
                             <tr style="border: none;">
                                 <td style="border: 1px solid #cbd5e1; background-color: #f8fafc; width: 48%; vertical-align: top; padding: 12px;">
-                                    <b>發貨人 / 工程師 (Issued by)</b><br><br>
-                                    姓名: 陳工程師 (Chan Eng)<br><br>
-                                    簽署: ${engHtml}
+                                    <b>Issued by / Engineer</b><br><br>
+                                    Name: K.W. Chan (Engineer)<br><br>
+                                    Signature: ${engHtml}
                                 </td>
                                 <td style="border: none; width: 4%;"></td>
                                 <td style="border: 1px solid #cbd5e1; background-color: #f8fafc; width: 48%; vertical-align: top; padding: 12px;">
-                                    <b>收貨人 / 地盤代表 (Received by)</b><br><br>
-                                    姓名: ____________________<br><br>
-                                    簽署: ${recHtml}
+                                    <b>Received by / Site Representative</b><br><br>
+                                    Name: ____________________<br><br>
+                                    Signature: ${recHtml}
                                 </td>
                             </tr>
                         </table>
@@ -450,7 +439,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // 初始化載入
         renderTable();
     </script>
 </body>
