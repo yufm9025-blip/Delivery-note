@@ -1,5 +1,185 @@
-        // 品項資料陣列
-        let items = [
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星爾 FTS 地盤煤氣送貨單生成器</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                padding: 0 !important;
+            }
+            .a4-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen py-8 px-4 flex flex-col items-center">
+
+    <!-- 頂部操作控制列 (僅供網頁操作，不影響 Word 內容) -->
+    <div class="no-print w-full max-w-[210mm] bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6 flex flex-wrap justify-between items-center gap-4">
+        <div>
+            <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-file-invoice text-blue-600"></i> 星爾 FTS 送貨單生成系統
+            </h1>
+            <p class="text-xs text-slate-500">所有修改即時反映於預覽畫布中，編輯完成後可直接一鍵匯出 Word 單頁檔案。</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="resetData()" class="px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-right"></i> 重設預設值
+            </button>
+            <button onclick="saveAsWord()" class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition flex items-center gap-2">
+                <i class="fa-solid fa-file-word text-sm"></i> 下載 Word 檔案 (.doc)
+            </button>
+        </div>
+    </div>
+
+    <!-- A4 預覽畫布本體 -->
+    <div class="a4-page w-full max-w-[210mm] bg-white shadow-xl rounded-sm p-10 box-border text-slate-800 relative flex flex-col justify-between" style="min-height: 297mm;">
+        
+        <!-- 內容頂部區 -->
+        <div>
+            <!-- 公司抬頭與單號 -->
+            <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-black tracking-wide text-slate-900">星爾發展有限公司</h2>
+                    <p class="text-xs font-bold text-blue-600 tracking-wider">CARSWELL DEVELOPMENTS LIMITED</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">香港中華煤氣指定承建商 (Towngas Sub-contractor)</p>
+                </div>
+                <div class="text-right">
+                    <h1 class="text-xl font-bold text-slate-800">送 貨 單</h1>
+                    <p class="text-xs text-slate-500 font-medium">DELIVERY NOTE</p>
+                    <div class="mt-2 flex items-center justify-end gap-1.5">
+                        <span class="text-xs font-semibold text-slate-600">單號 No:</span>
+                        <input type="text" id="global-dn" value="CS-FTS-2026-0301" class="border border-slate-300 rounded px-2 py-0.5 text-xs font-mono font-bold w-36 text-right bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 地點與日期資訊區 -->
+            <div class="grid grid-cols-2 gap-4 bg-slate-50/70 p-4 rounded-lg border border-slate-200 mb-6 text-xs">
+                <div>
+                    <p class="font-bold text-slate-700 mb-1"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> 送貨地點 (Delivery Destination):</p>
+                    <p class="text-slate-800 font-medium">發祥街地盤 (FTS Site)</p>
+                    <p class="text-slate-500 text-[11px] mt-0.5">香港九龍發祥街煤氣工程工地</p>
+                    <p class="text-slate-500 text-[11px]">項目性質: 煤氣喉管與配件安裝工程</p>
+                </div>
+                <div class="flex flex-col justify-between items-end">
+                    <div class="space-y-1 text-right w-full">
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="font-semibold text-slate-600">送貨日期:</span>
+                            <input type="date" id="global-date" value="2026-06-07" class="border border-slate-300 rounded px-2 py-0.5 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        <div class="flex items-center justify-end gap-2">
+                            <span class="font-semibold text-slate-600">送貨時間:</span>
+                            <input type="time" id="global-time" value="09:30" class="border border-slate-300 rounded px-2 py-0.5 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 品項清單表格 (所見即所得直接編輯) -->
+            <div class="mb-6">
+                <table class="w-full text-xs border-collapse border border-slate-300">
+                    <thead>
+                        <tr class="bg-slate-900 text-white text-center">
+                            <th class="py-2 px-1 border border-slate-700 w-10">項</th>
+                            <th class="py-2 px-2 border border-slate-700 w-28 text-left">品項分類</th>
+                            <th class="py-2 px-2 border border-slate-700 w-24 text-left">尺寸/規格</th>
+                            <th class="py-2 px-2 border border-slate-700 w-20">長度 (M)</th>
+                            <th class="py-2 px-2 border border-slate-700 w-16">數量</th>
+                            <th class="py-2 px-2 border border-slate-700 text-left">合符國際標準 (Standard)</th>
+                            <th class="no-print py-2 px-1 border border-slate-700 w-12">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-table-body">
+                        <!-- 動態生成 -->
+                    </tbody>
+                </table>
+
+                <!-- 內嵌於預覽畫布中的新增品項按鈕 -->
+                <div class="no-print mt-2">
+                    <button onclick="addItem()" class="w-full py-2 border-2 border-dashed border-slate-300 hover:border-blue-500 text-slate-600 hover:text-blue-600 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 bg-slate-50/50">
+                        <i class="fa-solid fa-circle-plus"></i> 新增送貨品項 (Add Item)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部簽名區 (工程師與收貨人) -->
+        <div>
+            <div class="grid grid-cols-2 gap-6 pt-4 border-t border-slate-200">
+                <!-- 發貨人 / 工程師 -->
+                <div class="border border-slate-300 rounded-lg p-3 bg-slate-50/50 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-slate-700 text-xs">發貨人 / 工程師 (Issued by)</span>
+                            <label class="no-print text-[11px] text-blue-600 hover:underline cursor-pointer flex items-center gap-1">
+                                <i class="fa-solid fa-signature"></i> 上傳簽名
+                                <input type="file" accept="image/*" class="hidden" onchange="uploadSignature(event, 'eng')">
+                            </label>
+                        </div>
+                        <div class="text-xs text-slate-600 space-y-1 mb-3">
+                            <p>公司: 星爾發展有限公司</p>
+                            <p>姓名: 陳工程師 (Chan Eng)</p>
+                        </div>
+                    </div>
+                    <div class="border-t border-dashed border-slate-300 pt-2 h-14 flex items-center justify-center relative">
+                        <span id="eng-sig-placeholder" class="text-slate-400 text-[11px] italic">K.W. Chan (預設簽署)</span>
+                        <img id="eng-sig-img" class="max-h-12 max-w-full hidden object-contain" alt="Engineer Signature">
+                    </div>
+                </div>
+
+                <!-- 收貨人 / 地盤代表 -->
+                <div class="border border-slate-300 rounded-lg p-3 bg-slate-50/50 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-slate-700 text-xs">收貨人 / 地盤代表 (Received by)</span>
+                            <label class="no-print text-[11px] text-blue-600 hover:underline cursor-pointer flex items-center gap-1">
+                                <i class="fa-solid fa-signature"></i> 上傳簽名
+                                <input type="file" accept="image/*" class="hidden" onchange="uploadSignature(event, 'rec')">
+                            </label>
+                        </div>
+                        <div class="text-xs text-slate-600 space-y-1 mb-3">
+                            <p>地盤: 發祥街地盤 (FTS Site)</p>
+                            <p>代表: ____________________</p>
+                        </div>
+                    </div>
+                    <div class="border-t border-dashed border-slate-300 pt-2 h-14 flex items-center justify-center relative">
+                        <span id="rec-sig-placeholder" class="text-slate-400 text-[11px] italic">請上傳或簽署</span>
+                        <img id="rec-sig-img" class="max-h-12 max-w-full hidden object-contain" alt="Receiver Signature">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 頁尾備註 -->
+            <div class="mt-6 pt-3 border-t border-slate-200 text-center text-[10px] text-slate-400">
+                本單據由星爾發展有限公司 (Carswell Developments Limited) 系統自動生成 • 適用於香港中華煤氣 FTS 地盤工程項目
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript 邏輯控制 -->
+    <script>
+        // 品項預設資料
+        let defaultItems = [
             { type: '喉管 (Pipe)', size: '25mm', length: 6, qty: 10, standard: 'BS EN 1057 (Copper)' },
             { type: '90° Elbow', size: '25mm', length: '-', qty: 25, standard: 'BS EN 1254-1' },
             { type: 'Tee', size: '25mm', length: '-', qty: 10, standard: 'BS EN 1254-1' },
@@ -7,38 +187,22 @@
             { type: 'Union', size: '25mm', length: '-', qty: 5, standard: 'BS 864 / BS EN 1254' }
         ];
 
-        // 監聽品項類別變更，若選非喉管則自動將長度設為 "-" 並且停用
-        function handleTypeChange(selectElem, index) {
-            const val = selectElem.value;
-            items[index].type = val;
-            const lengthInput = document.getElementById(`length-input-${index}`);
-            if (val !== '喉管 (Pipe)') {
-                items[index].length = '-';
-                lengthInput.value = '-';
-                lengthInput.disabled = true;
-                lengthInput.classList.add('bg-slate-100', 'text-slate-400');
-            } else {
-                items[index].length = 6;
-                lengthInput.value = 6;
-                lengthInput.disabled = false;
-                lengthInput.classList.remove('bg-slate-100', 'text-slate-400');
-            }
-        }
+        let items = JSON.parse(JSON.stringify(defaultItems));
 
-        // 渲染品項表格 (包含所見即所得的互動輸入與刪除按鈕)
+        // 渲染品項表格
         function renderTable() {
             const tbody = document.getElementById('items-table-body');
             tbody.innerHTML = '';
 
             items.forEach((item, index) => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition';
+                tr.className = 'hover:bg-slate-50/80 transition';
                 
                 const isPipe = item.type === '喉管 (Pipe)';
 
                 tr.innerHTML = `
-                    <td class="py-1.5 px-2 text-center font-mono text-slate-500">${index + 1}</td>
-                    <td class="py-1.5 px-2">
+                    <td class="py-1.5 px-1 border border-slate-200 text-center font-mono text-slate-500 text-[11px]">${index + 1}</td>
+                    <td class="py-1.5 px-2 border border-slate-200">
                         <select onchange="handleTypeChange(this, ${index})" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none">
                             <option value="喉管 (Pipe)" ${item.type === '喉管 (Pipe)' ? 'selected' : ''}>喉管 (Pipe)</option>
                             <option value="90° Elbow" ${item.type === '90° Elbow' ? 'selected' : ''}>90° Elbow</option>
@@ -47,7 +211,7 @@
                             <option value="Union" ${item.type === 'Union' ? 'selected' : ''}>Union</option>
                         </select>
                     </td>
-                    <td class="py-1.5 px-2">
+                    <td class="py-1.5 px-2 border border-slate-200">
                         <select onchange="updateItem(${index}, 'size', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none">
                             <option value="15mm" ${item.size === '15mm' ? 'selected' : ''}>15mm</option>
                             <option value="20mm" ${item.size === '20mm' ? 'selected' : ''}>20mm</option>
@@ -56,18 +220,18 @@
                             <option value="100mm" ${item.size === '100mm' ? 'selected' : ''}>100mm</option>
                         </select>
                     </td>
-                    <td class="py-1.5 px-2">
+                    <td class="py-1.5 px-2 border border-slate-200 text-center">
                         <input id="length-input-${index}" type="text" value="${item.length}" ${!isPipe ? 'disabled' : ''} onchange="updateItem(${index}, 'length', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 outline-none ${!isPipe ? 'bg-slate-100 text-slate-400' : ''}" />
                     </td>
-                    <td class="py-1.5 px-2">
-                        <input type="number" min="1" value="${item.qty}" onchange="updateItem(${index}, 'qty', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 outline-none font-semibold" />
+                    <td class="py-1.5 px-2 border border-slate-200 text-center">
+                        <input type="number" min="1" value="${item.qty}" onchange="updateItem(${index}, 'qty', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs text-center font-semibold focus:ring-1 focus:ring-blue-500 outline-none" />
                     </td>
-                    <td class="py-1.5 px-2">
-                        <input type="text" value="${item.standard}" placeholder="例如: BS EN 1057" onchange="updateItem(${index}, 'standard', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none" />
+                    <td class="py-1.5 px-2 border border-slate-200">
+                        <input type="text" value="${item.standard}" placeholder="例如: BS EN 1254-1" onchange="updateItem(${index}, 'standard', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none" />
                     </td>
-                    <td class="no-print py-1.5 px-2 text-center">
+                    <td class="no-print py-1.5 px-1 border border-slate-200 text-center">
                         <button onclick="deleteItem(${index})" class="text-rose-500 hover:text-rose-700 p-1 rounded transition" title="刪除此項">
-                            <i class="fa-solid fa-trash-can"></i>
+                            <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
                     </td>
                 `;
@@ -75,49 +239,101 @@
             });
         }
 
+        // 處理品項類型變更
+        function handleTypeChange(selectElem, index) {
+            const val = selectElem.value;
+            items[index].type = val;
+            const lengthInput = document.getElementById(`length-input-${index}`);
+            if (val !== '喉管 (Pipe)') {
+                items[index].length = '-';
+                if (lengthInput) {
+                    lengthInput.value = '-';
+                    lengthInput.disabled = true;
+                    lengthInput.classList.add('bg-slate-100', 'text-slate-400');
+                }
+            } else {
+                items[index].length = 6;
+                if (lengthInput) {
+                    lengthInput.value = 6;
+                    lengthInput.disabled = false;
+                    lengthInput.classList.remove('bg-slate-100', 'text-slate-400');
+                }
+            }
+        }
+
+        // 更新單一欄位值
+        function updateItem(index, field, value) {
+            items[index][field] = value;
+        }
+
         // 新增品項
         function addItem() {
             items.push({ type: '90° Elbow', size: '25mm', length: '-', qty: 1, standard: 'BS EN 1254-1' });
             renderTable();
         }
+
+        // 刪除品項
+        function deleteItem(index) {
+            if (items.length <= 1) {
+                return;
+            }
+            items.splice(index, 1);
+            renderTable();
+        }
+
+        // 重設資料
+        function resetData() {
+            items = JSON.parse(JSON.stringify(defaultItems));
+            document.getElementById('global-dn').value = 'CS-FTS-2026-0301';
+            renderTable();
+        }
+
+        // 上傳簽名圖片
+        function uploadSignature(event, target) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgElem = document.getElementById(`${target}-sig-img`);
+                    const placeholderElem = document.getElementById(`${target}-sig-placeholder`);
+                    imgElem.src = e.target.result;
+                    imgElem.classList.remove('hidden');
+                    placeholderElem.classList.add('hidden');
+                }
                 reader.readAsDataURL(file);
             }
         }
 
         // 生成單頁 A4 Word 檔案 (.doc)
         function saveAsWord() {
-            // 讀取當前畫面中的各項動態資料
             const dn = document.getElementById('global-dn').value || 'CS-FTS-2026-0301';
             const dateStr = document.getElementById('global-date').value;
             const timeStr = document.getElementById('global-time').value;
             
-            // 組合表格 HTML 內容
             let tableRowsHtml = '';
             items.forEach((item, index) => {
                 tableRowsHtml += `
                     <tr style="border-bottom: 1px solid #cbd5e1;">
-                        <td style="padding: 6px; text-align: center; font-family: monospace;">${index + 1}</td>
-                        <td style="padding: 6px;">${item.type}</td>
-                        <td style="padding: 6px;">${item.size}</td>
-                        <td style="padding: 6px; text-align: center;">${item.length}</td>
-                        <td style="padding: 6px; text-align: center;">${item.qty}</td>
-                        <td style="padding: 6px;">${item.standard}</td>
+                        <td style="padding: 6px; text-align: center; font-family: monospace; border: 1px solid #cbd5e1;">${index + 1}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${item.type}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${item.size}</td>
+                        <td style="padding: 6px; text-align: center; border: 1px solid #cbd5e1;">${item.length}</td>
+                        <td style="padding: 6px; text-align: center; border: 1px solid #cbd5e1;">${item.qty}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${item.standard}</td>
                     </tr>
                 `;
             });
 
-            // 取得簽名圖片（如有上傳）
             let engImgSrc = document.getElementById('eng-sig-img').src;
             let engHtml = document.getElementById('eng-sig-img').classList.contains('hidden') ? 
-                          '<span style="font-style: italic; color: #64748b;">K.W. Chan</span>' : 
-                          `<img src="${engImgSrc}" style="max-height: 35px; max-width: 120px;" />`;
+                          '<span style="font-style: italic; color: #64748b;">K.W. Chan (預設簽署)</span>' : 
+                          `<img src="${engImgSrc}" style="max-height: 40px; max-width: 140px;" />`;
 
             let recImgSrc = document.getElementById('rec-sig-img').src;
             let recHtml = document.getElementById('rec-sig-img').classList.contains('hidden') ? 
                           '<span style="color: #94a3b8;">未簽署</span>' : 
-                          `<img src="${recImgSrc}" style="max-height: 35px; max-width: 120px;" />`;
+                          `<img src="${recImgSrc}" style="max-height: 40px; max-width: 140px;" />`;
 
-            // 包裝成標準的 Word XML/HTML 格式，並強制設定 A4 尺寸與邊距
             const wordContent = `
                 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/1999/xlink">
                 <head>
@@ -173,12 +389,12 @@
                         <!-- 資訊框 -->
                         <table style="background-color: #f8fafc; margin-bottom: 15px;">
                             <tr style="border: none;">
-                                <td style="border: none; width: 55%; vertical-align: top;">
+                                <td style="border: none; width: 55%; vertical-align: top; padding: 10px;">
                                     <b>送貨地點:</b> 發祥街地盤 (FTS Site)<br>
                                     <b>地盤地址:</b> 香港九龍發祥街煤氣工程工地<br>
-                                    <b>項目性質:</b> 煤氣喉管安裝工程
+                                    <b>項目性質:</b> 煤氣喉管與配件安裝工程
                                 </td>
-                                <td style="border: none; width: 45%; vertical-align: top; text-align: right;">
+                                <td style="border: none; width: 45%; vertical-align: top; text-align: right; padding: 10px;">
                                     <b>送貨日期:</b> ${dateStr}<br>
                                     <b>送貨時間:</b> ${timeStr}
                                 </td>
@@ -189,11 +405,11 @@
                         <table style="margin-bottom: 25px;">
                             <thead>
                                 <tr>
-                                    <th style="width: 30px; text-align: center;">項</th>
+                                    <th style="width: 35px; text-align: center;">項</th>
                                     <th style="width: 100px;">品項分類</th>
                                     <th style="width: 80px;">尺寸/規格</th>
                                     <th style="width: 70px; text-align: center;">長度 (M)</th>
-                                    <th style="width: 50px; text-align: center;">數量</th>
+                                    <th style="width: 55px; text-align: center;">數量</th>
                                     <th>合符國際標準 (Standard)</th>
                                 </tr>
                             </thead>
@@ -203,15 +419,15 @@
                         </table>
 
                         <!-- 簽名區 -->
-                        <table style="border: none; margin-top: 20px;">
+                        <table style="border: none; margin-top: 30px;">
                             <tr style="border: none;">
-                                <td style="border: 1px solid #cbd5e1; background-color: #f8fafc; width: 48%; vertical-align: top; padding: 10px;">
+                                <td style="border: 1px solid #cbd5e1; background-color: #f8fafc; width: 48%; vertical-align: top; padding: 12px;">
                                     <b>發貨人 / 工程師 (Issued by)</b><br><br>
                                     姓名: 陳工程師 (Chan Eng)<br><br>
                                     簽署: ${engHtml}
                                 </td>
                                 <td style="border: none; width: 4%;"></td>
-                                <td style="border: 1px solid #cbd5e1; background-color: #f8fafc; width: 48%; vertical-align: top; padding: 10px;">
+                                <td style="border: 1px solid #cbd5e1; background-color: #f8fafc; width: 48%; vertical-align: top; padding: 12px;">
                                     <b>收貨人 / 地盤代表 (Received by)</b><br><br>
                                     姓名: ____________________<br><br>
                                     簽署: ${recHtml}
@@ -223,7 +439,6 @@
                 </html>
             `;
 
-            // 建立 Blob 並觸發下載
             const blob = new Blob(['\ufeff' + wordContent], { type: 'application/msword' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -235,7 +450,7 @@
             URL.revokeObjectURL(url);
         }
 
-        // 初始化
+        // 初始化載入
         renderTable();
     </script>
 </body>
