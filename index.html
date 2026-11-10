@@ -134,9 +134,12 @@
                                 <input type="file" accept="image/*" class="hidden" onchange="uploadSignature(event, 'eng')">
                             </label>
                         </div>
-                        <div class="text-xs text-slate-600 space-y-1 mb-3">
-                            <p>Company: Carswell International Limited</p>
-                            <p>Name: K.W. Chan (Engineer)</p>
+                        <div class="text-xs text-slate-600 space-y-1.5 mb-3">
+                            <p class="text-[11px] text-slate-500">Company: Carswell International Limited</p>
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-semibold text-slate-600">Name:</span>
+                                <input type="text" id="global-engineer" value="K.W. Chan (Engineer)" class="border border-slate-300 rounded px-2 py-0.5 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500 w-full font-medium text-slate-800">
+                            </div>
                         </div>
                     </div>
                     <div class="border-t border-dashed border-slate-300 pt-2 h-14 flex items-center justify-center relative">
@@ -155,9 +158,12 @@
                                 <input type="file" accept="image/*" class="hidden" onchange="uploadSignature(event, 'rec')">
                             </label>
                         </div>
-                        <div class="text-xs text-slate-600 space-y-1 mb-3">
-                            <p>Site: FTS Site (發祥街地盤)</p>
-                            <p>Representative: ____________________</p>
+                        <div class="text-xs text-slate-600 space-y-1.5 mb-3">
+                            <p class="text-[11px] text-slate-500">Site: FTS Site (發祥街地盤)</p>
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-semibold text-slate-600">Representative:</span>
+                                <input type="text" id="global-receiver" value="____________________" class="border border-slate-300 rounded px-2 py-0.5 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500 w-full font-medium text-slate-800">
+                            </div>
                         </div>
                     </div>
                     <div class="border-t border-dashed border-slate-300 pt-2 h-14 flex items-center justify-center relative">
@@ -299,6 +305,8 @@
             const dn = document.getElementById('global-dn').value || 'CS-FTS-2026-0301';
             const dateStr = document.getElementById('global-date').value;
             const timeStr = document.getElementById('global-time').value;
+            const engineerName = document.getElementById('global-engineer').value || 'K.W. Chan (Engineer)';
+            const receiverName = document.getElementById('global-receiver').value || '____________________';
             
             let tableRowsHtml = '';
             items.forEach((item, index) => {
@@ -316,7 +324,7 @@
 
             let engImgSrc = document.getElementById('eng-sig-img').src;
             let engHtml = document.getElementById('eng-sig-img').classList.contains('hidden') ? 
-                          '<span style="font-style: italic; color: #64748b;">K.W. Chan (Default Signature)</span>' : 
+                          `<span style="font-style: italic; color: #64748b;">${engineerName} (Default Signature)</span>` : 
                           `<img src="${engImgSrc}" style="max-height: 40px; max-width: 140px;" />`;
 
             let recImgSrc = document.getElementById('rec-sig-img').src;
@@ -412,13 +420,13 @@
                             <tr style="border: none;">
                                 <td style="border: 1px solid #cbd5e1; background-color: #f8fafc; width: 48%; vertical-align: top; padding: 12px;">
                                     <b>Issued by / Engineer</b><br><br>
-                                    Name: K.W. Chan (Engineer)<br><br>
+                                    Name: ${engineerName}<br><br>
                                     Signature: ${engHtml}
                                 </td>
                                 <td style="border: none; width: 4%;"></td>
                                 <td style="border: 1px solid #cbd5e1; background-color: #f8fafc; width: 48%; vertical-align: top; padding: 12px;">
                                     <b>Received by / Site Representative</b><br><br>
-                                    Name: ____________________<br><br>
+                                    Name: ${receiverName}<br><br>
                                     Signature: ${recHtml}
                                 </td>
                             </tr>
