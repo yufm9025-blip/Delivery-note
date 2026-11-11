@@ -9,6 +9,9 @@
     <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html2canvas & jsPDF CDN for Image and PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -38,20 +41,26 @@
             <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                 <i class="fa-solid fa-file-invoice text-blue-600"></i> Carswell FTS Delivery Note System
             </h1>
-            <p class="text-xs text-slate-500">All modifications update instantly on the preview canvas. Export as a single-page Word document when ready.</p>
+            <p class="text-xs text-slate-500">All modifications update instantly on the preview canvas. Export as Word, Image, or PDF in a single A4 page.</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-2">
             <button onclick="resetData()" class="px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition flex items-center gap-1.5">
-                <i class="fa-solid fa-rotate-right"></i> Reset Defaults
+                <i class="fa-solid fa-rotate-right"></i> Reset
             </button>
-            <button onclick="saveAsWord()" class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition flex items-center gap-2">
-                <i class="fa-solid fa-file-word text-sm"></i> Download Word File (.doc)
+            <button onclick="saveAsWord()" class="px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-word text-sm"></i> Word (.doc)
+            </button>
+            <button id="btn-img" onclick="exportDocument('image')" class="px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-image text-sm"></i> Image (.png)
+            </button>
+            <button id="btn-pdf" onclick="exportDocument('pdf')" class="px-3.5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-pdf text-sm"></i> PDF (.pdf)
             </button>
         </div>
     </div>
 
     <!-- A4 Preview Canvas -->
-    <div class="a4-page w-full max-w-[210mm] bg-white shadow-xl rounded-sm p-10 box-border text-slate-800 relative flex flex-col justify-between" style="min-height: 297mm;">
+    <div id="a4-canvas" class="a4-page w-full max-w-[210mm] bg-white shadow-xl rounded-sm p-10 box-border text-slate-800 relative flex flex-col justify-between" style="min-height: 297mm;">
         
         <!-- Top Section -->
         <div>
@@ -138,7 +147,7 @@
                             <p class="text-[11px] text-slate-500">Company: Carswell International Limited</p>
                             <div class="flex items-center gap-1.5">
                                 <span class="font-semibold text-slate-600">Name:</span>
-                                <input type="text" id="global-engineer" value="K.W. Chan (Engineer)" class="border border-slate-300 rounded px-2 py-0.5 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500 w-full font-medium text-slate-800">
+                                <input type="text" id="global-engineer" value="K.W. Chan (Engineer)" oninput="document.getElementById('eng-sig-placeholder').textContent = (this.value || 'Engineer') + ' (Default Signature)'" class="border border-slate-300 rounded px-2 py-0.5 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500 w-full font-medium text-slate-800">
                             </div>
                         </div>
                     </div>
@@ -184,11 +193,11 @@
     <!-- JavaScript Control Logic -->
     <script>
         let defaultItems = [
-            { type: 'Pipe', size: '25mm', length: 6, qty: 10, standard: 'BS EN 1057 (Copper)' },
-            { type: '90° Elbow', size: '25mm', length: '-', qty: 25, standard: 'BS EN 1254-1' },
-            { type: 'Tee', size: '25mm', length: '-', qty: 10, standard: 'BS EN 1254-1' },
-            { type: 'Socket', size: '25mm', length: '-', qty: 15, standard: 'BS EN 1254-1' },
-            { type: 'Union', size: '25mm', length: '-', qty: 5, standard: 'BS 864 / BS EN 1254' }
+            { type: 'Pipe', size: '25mm', length: 6, qty: 10, standard: 'BS EN 10255' },
+            { type: '90° Elbow', size: '25mm', length: '-', qty: 25, standard: 'CG-GAS' },
+            { type: 'Tee', size: '25mm', length: '-', qty: 10, standard: 'CG-GAS' },
+            { type: 'Socket', size: '25mm', length: '-', qty: 15, standard: 'CG-GAS' },
+            { type: 'Union', size: '25mm', length: '-', qty: 5, standard: 'CG-GAS' }
         ];
 
         let items = JSON.parse(JSON.stringify(defaultItems));
@@ -230,7 +239,7 @@
                         <input type="number" min="1" value="${item.qty}" onchange="updateItem(${index}, 'qty', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs text-center font-semibold focus:ring-1 focus:ring-blue-500 outline-none" />
                     </td>
                     <td class="py-1.5 px-2 border border-slate-200">
-                        <input type="text" value="${item.standard}" placeholder="e.g. BS EN 1254-1" onchange="updateItem(${index}, 'standard', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none" />
+                        <input id="standard-input-${index}" type="text" value="${item.standard}" placeholder="e.g. BS EN 10255 / CG-GAS" onchange="updateItem(${index}, 'standard', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none" />
                     </td>
                     <td class="no-print py-1.5 px-1 border border-slate-200 text-center">
                         <button onclick="deleteItem(${index})" class="text-rose-500 hover:text-rose-700 p-1 rounded transition" title="Delete item">
@@ -246,19 +255,29 @@
             const val = selectElem.value;
             items[index].type = val;
             const lengthInput = document.getElementById(`length-input-${index}`);
+            const standardInput = document.getElementById(`standard-input-${index}`);
+
             if (val !== 'Pipe') {
                 items[index].length = '-';
+                items[index].standard = 'CG-GAS';
                 if (lengthInput) {
                     lengthInput.value = '-';
                     lengthInput.disabled = true;
                     lengthInput.classList.add('bg-slate-100', 'text-slate-400');
                 }
+                if (standardInput) {
+                    standardInput.value = 'CG-GAS';
+                }
             } else {
                 items[index].length = 6;
+                items[index].standard = 'BS EN 10255';
                 if (lengthInput) {
                     lengthInput.value = 6;
                     lengthInput.disabled = false;
                     lengthInput.classList.remove('bg-slate-100', 'text-slate-400');
+                }
+                if (standardInput) {
+                    standardInput.value = 'BS EN 10255';
                 }
             }
         }
@@ -268,7 +287,7 @@
         }
 
         function addItem() {
-            items.push({ type: '90° Elbow', size: '25mm', length: '-', qty: 1, standard: 'BS EN 1254-1' });
+            items.push({ type: '90° Elbow', size: '25mm', length: '-', qty: 1, standard: 'CG-GAS' });
             renderTable();
         }
 
@@ -283,6 +302,9 @@
         function resetData() {
             items = JSON.parse(JSON.stringify(defaultItems));
             document.getElementById('global-dn').value = 'CS-FTS-2026-0301';
+            document.getElementById('global-engineer').value = 'K.W. Chan (Engineer)';
+            document.getElementById('eng-sig-placeholder').textContent = 'K.W. Chan (Engineer) (Default Signature)';
+            document.getElementById('global-receiver').value = '____________________';
             renderTable();
         }
 
@@ -301,6 +323,91 @@
             }
         }
 
+        // Export as Image (.png) or PDF (.pdf) fitted to 1 A4 page
+        async function exportDocument(format) {
+            const dn = document.getElementById('global-dn').value || 'CS-FTS-2026-0301';
+            const sourceElement = document.getElementById('a4-canvas');
+            const btn = document.getElementById(format === 'pdf' ? 'btn-pdf' : 'btn-img');
+            const originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            try {
+                // Clone the A4 canvas to render clean static text instead of form inputs
+                const clone = sourceElement.cloneNode(true);
+                clone.style.width = '794px'; // Standard A4 width at 96 DPI
+                clone.style.minHeight = '1123px'; // Standard A4 height at 96 DPI
+                clone.style.position = 'fixed';
+                clone.style.top = '-9999px';
+                clone.style.left = '-9999px';
+                clone.style.boxShadow = 'none';
+                document.body.appendChild(clone);
+
+                // Remove all .no-print elements inside clone
+                clone.querySelectorAll('.no-print').forEach(el => el.remove());
+
+                // Replace inputs and selects in clone with clean text spans for crisp rendering
+                const origInputs = sourceElement.querySelectorAll('input:not([type="file"]), select');
+                const cloneInputs = clone.querySelectorAll('input:not([type="file"]), select');
+                origInputs.forEach((origEl, idx) => {
+                    const cloneEl = cloneInputs[idx];
+                    if (!cloneEl) return;
+                    const span = document.createElement('span');
+                    span.textContent = origEl.value;
+                    span.className = 'inline-block py-0.5 text-xs font-medium text-slate-800';
+                    if (origEl.classList.contains('text-center')) {
+                        span.classList.add('w-full', 'text-center');
+                    } else if (origEl.classList.contains('text-right')) {
+                        span.classList.add('text-right', 'font-mono', 'font-bold');
+                    }
+                    cloneEl.parentNode.replaceChild(span, cloneEl);
+                });
+
+                const canvas = await html2canvas(clone, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+
+                document.body.removeChild(clone);
+
+                if (format === 'image') {
+                    const imgUrl = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = imgUrl;
+                    a.download = `Carswell_FTS_${dn}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else if (format === 'pdf') {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const pdfWidth = 210;
+                    const pdfHeight = 297;
+                    const imgData = canvas.toDataURL('image/png');
+
+                    // Calculate aspect ratio and strictly fit within 1 single A4 page
+                    const imgProps = pdf.getImageProperties(imgData);
+                    let renderWidth = pdfWidth;
+                    let renderHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                    if (renderHeight > pdfHeight) {
+                        renderHeight = pdfHeight;
+                        renderWidth = (imgProps.width * pdfHeight) / imgProps.height;
+                    }
+
+                    const xOffset = (pdfWidth - renderWidth) / 2;
+                    pdf.addImage(imgData, 'PNG', xOffset, 0, renderWidth, renderHeight);
+                    pdf.save(`Carswell_FTS_${dn}.pdf`);
+                }
+            } catch (err) {
+                console.error('Export failed:', err);
+            } finally {
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+            }
+        }
+
         function saveAsWord() {
             const dn = document.getElementById('global-dn').value || 'CS-FTS-2026-0301';
             const dateStr = document.getElementById('global-date').value;
@@ -310,104 +417,117 @@
             
             let tableRowsHtml = '';
             items.forEach((item, index) => {
+                const rowBg = index % 2 === 1 ? '#f8fafc' : '#ffffff';
                 tableRowsHtml += `
-                    <tr style="border-bottom: 1px solid #cbd5e1;">
-                        <td style="padding: 6px; text-align: center; font-family: monospace; border: 1px solid #cbd5e1;">${index + 1}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${item.type}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${item.size}</td>
-                        <td style="padding: 6px; text-align: center; border: 1px solid #cbd5e1;">${item.length}</td>
-                        <td style="padding: 6px; text-align: center; border: 1px solid #cbd5e1;">${item.qty}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${item.standard}</td>
+                    <tr style="background-color: ${rowBg};">
+                        <td style="padding: 6px 4px; text-align: center; font-family: Consolas, monospace; border: 1px solid #cbd5e1; font-size: 9.5pt; color: #475569;">${index + 1}</td>
+                        <td style="padding: 6px 8px; border: 1px solid #cbd5e1; font-size: 9.5pt; font-weight: bold; color: #1e293b;">${item.type}</td>
+                        <td style="padding: 6px 8px; border: 1px solid #cbd5e1; font-size: 9.5pt; color: #334155;">${item.size}</td>
+                        <td style="padding: 6px 4px; text-align: center; border: 1px solid #cbd5e1; font-size: 9.5pt; color: #334155;">${item.length}</td>
+                        <td style="padding: 6px 4px; text-align: center; border: 1px solid #cbd5e1; font-size: 9.5pt; font-weight: bold; color: #0f172a;">${item.qty}</td>
+                        <td style="padding: 6px 8px; border: 1px solid #cbd5e1; font-size: 9.5pt; color: #1e293b;">${item.standard}</td>
                     </tr>
                 `;
             });
 
             let engImgSrc = document.getElementById('eng-sig-img').src;
             let engHtml = document.getElementById('eng-sig-img').classList.contains('hidden') ? 
-                          `<span style="font-style: italic; color: #64748b;">${engineerName} (Default Signature)</span>` : 
-                          `<img src="${engImgSrc}" style="max-height: 40px; max-width: 140px;" />`;
+                          `<span style="font-style: italic; color: #64748b; font-size: 9pt;">${engineerName} (Default Signature)</span>` : 
+                          `<img src="${engImgSrc}" height="42" style="max-height: 42px; width: auto;" />`;
 
             let recImgSrc = document.getElementById('rec-sig-img').src;
             let recHtml = document.getElementById('rec-sig-img').classList.contains('hidden') ? 
-                          '<span style="color: #94a3b8;">Unsigned</span>' : 
-                          `<img src="${recImgSrc}" style="max-height: 40px; max-width: 140px;" />`;
+                          '<span style="font-style: italic; color: #94a3b8; font-size: 9pt;">(Pending Signature)</span>' : 
+                          `<img src="${recImgSrc}" height="42" style="max-height: 42px; width: auto;" />`;
 
             const wordContent = `
-                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/1999/xlink">
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+                      xmlns:w="urn:schemas-microsoft-com:office:word" 
+                      xmlns="http://www.w3.org/TR/REC-html40">
                 <head>
                     <meta charset="utf-8">
-                    <title>Carswell Delivery Note - FTS</title>
+                    <title>Carswell Delivery Note - ${dn}</title>
+                    <!--[if gte mso 9]>
+                    <xml>
+                        <w:WordDocument>
+                            <w:View>Print</w:View>
+                            <w:Zoom>100</w:Zoom>
+                            <w:DoNotOptimizeForBrowser/>
+                        </w:WordDocument>
+                    </xml>
+                    <![endif]-->
                     <style>
                         @page Section1 {
                             size: 210mm 297mm;
-                            margin: 15mm;
+                            margin: 12.7mm 15mm 12.7mm 15mm;
+                            mso-header-margin: 10mm;
+                            mso-footer-margin: 10mm;
                             mso-page-orientation: portrait;
                         }
                         div.Section1 {
                             page: Section1;
                         }
                         body {
-                            font-family: 'Arial', sans-serif;
-                            font-size: 11pt;
+                            font-family: 'Segoe UI', 'Arial', sans-serif;
+                            font-size: 10pt;
                             color: #1e293b;
+                            margin: 0;
+                            padding: 0;
                         }
                         table {
                             width: 100%;
                             border-collapse: collapse;
+                            mso-table-lspace: 0pt;
+                            mso-table-rspace: 0pt;
                         }
-                        th, td {
-                            border: 1px solid #cbd5e1;
-                            padding: 6px 8px;
-                            font-size: 10pt;
-                        }
-                        th {
-                            background-color: #1e293b;
-                            color: white;
+                        p {
+                            margin: 0 0 3px 0;
                         }
                     </style>
                 </head>
                 <body>
                     <div class="Section1">
-                        <!-- Header -->
-                        <table style="border: none; margin-bottom: 15px;">
-                            <tr style="border: none;">
-                                <td style="border: none; width: 70%;">
-                                    <h2 style="margin: 0; color: #1e293b; font-size: 16pt;">CARSWELL INTERNATIONAL LIMITED</h2>
-                                    <p style="margin: 2px 0; color: #2563eb; font-weight: bold; font-size: 9pt;">星爾國際有限公司</p>
-                                    <p style="margin: 0; color: #64748b; font-size: 8pt;">Towngas Authorized Sub-contractor</p>
+                        <!-- Company Header -->
+                        <table cellpadding="0" cellspacing="0" style="width: 100%; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 14px;">
+                            <tr>
+                                <td style="width: 65%; vertical-align: top; border: none; padding-bottom: 10px;">
+                                    <p style="font-size: 16pt; font-weight: bold; color: #0f172a; letter-spacing: 0.5px; margin: 0;">CARSWELL INTERNATIONAL LIMITED</p>
+                                    <p style="font-size: 9.5pt; font-weight: bold; color: #2563eb; margin: 2px 0;">星爾國際有限公司</p>
+                                    <p style="font-size: 8.5pt; color: #64748b; margin: 0;">Towngas Authorized Sub-contractor</p>
                                 </td>
-                                <td style="border: none; text-align: right; width: 30%;">
-                                    <h1 style="margin: 0; font-size: 16pt;">DELIVERY NOTE</h1>
-                                    <p style="margin: 2px 0; font-size: 9pt; color: #475569;">送貨單</p>
-                                    <p style="margin: 0; font-size: 9pt; font-family: monospace;">No: ${dn}</p>
+                                <td style="width: 35%; vertical-align: top; text-align: right; border: none; padding-bottom: 10px;">
+                                    <p style="font-size: 14pt; font-weight: bold; color: #1e293b; margin: 0;">DELIVERY NOTE</p>
+                                    <p style="font-size: 9pt; color: #64748b; font-weight: bold; margin: 2px 0;">送 貨 單</p>
+                                    <p style="font-size: 9.5pt; font-family: Consolas, monospace; font-weight: bold; color: #0f172a; margin-top: 6px;">No: <span style="background-color: #f1f5f9; padding: 2px 6px; border: 1px solid #cbd5e1;">${dn}</span></p>
                                 </td>
                             </tr>
                         </table>
 
-                        <!-- Info Box -->
-                        <table style="background-color: #f8fafc; margin-bottom: 15px;">
-                            <tr style="border: none;">
-                                <td style="border: none; width: 55%; vertical-align: top; padding: 10px;">
-                                    <b>Delivery Destination:</b> FTS Site (發祥街地盤)<br>
-                                    <span style="font-size: 8.5pt; color: #475569; line-height: 1.3;">Towngas Installation at Proposed Composite Development at J9163 – Proposed Commercial and Residential Development at 1 Fat Tseung Street, Kowloon</span>
+                        <!-- Destination & Date Info Box -->
+                        <table cellpadding="0" cellspacing="0" style="width: 100%; background-color: #f8fafc; border: 1px solid #cbd5e1; margin-bottom: 16px;">
+                            <tr>
+                                <td style="width: 62%; vertical-align: top; padding: 10px 12px; border: none;">
+                                    <p style="font-size: 9.5pt; font-weight: bold; color: #334155; margin-bottom: 3px;">Delivery Destination:</p>
+                                    <p style="font-size: 10pt; font-weight: bold; color: #0f172a; margin-bottom: 3px;">FTS Site (發祥街地盤)</p>
+                                    <p style="font-size: 8.5pt; color: #475569; line-height: 1.35; margin: 0;">Towngas Installation at Proposed Composite Development at J9163 – Proposed Commercial and Residential Development at 1 Fat Tseung Street, Kowloon</p>
                                 </td>
-                                <td style="border: none; width: 45%; vertical-align: top; text-align: right; padding: 10px;">
-                                    <b>Delivery Date:</b> ${dateStr}<br>
-                                    <b>Delivery Time:</b> ${timeStr}
+                                <td style="width: 38%; vertical-align: top; text-align: right; padding: 10px 12px; border: none;">
+                                    <p style="font-size: 9.5pt; color: #334155; margin-bottom: 6px;"><b>Delivery Date:</b> <span style="font-family: Consolas, monospace;">${dateStr}</span></p>
+                                    <p style="font-size: 9.5pt; color: #334155; margin: 0;"><b>Delivery Time:</b> <span style="font-family: Consolas, monospace;">${timeStr}</span></p>
                                 </td>
                             </tr>
                         </table>
 
                         <!-- Items Table -->
-                        <table style="margin-bottom: 25px;">
+                        <table cellpadding="0" cellspacing="0" style="width: 100%; border: 1px solid #cbd5e1; margin-bottom: 20px;">
                             <thead>
-                                <tr>
-                                    <th style="width: 35px; text-align: center;">Item</th>
-                                    <th style="width: 100px;">Category</th>
-                                    <th style="width: 80px;">Size / Spec</th>
-                                    <th style="width: 70px; text-align: center;">Length (M)</th>
-                                    <th style="width: 55px; text-align: center;">Qty</th>
-                                    <th>International Standard</th>
+                                <tr style="background-color: #0f172a; color: #ffffff;">
+                                    <th style="width: 7%; padding: 7px 4px; text-align: center; border: 1px solid #0f172a; font-size: 9pt;">Item</th>
+                                    <th style="width: 20%; padding: 7px 8px; text-align: left; border: 1px solid #0f172a; font-size: 9pt;">Category</th>
+                                    <th style="width: 15%; padding: 7px 8px; text-align: left; border: 1px solid #0f172a; font-size: 9pt;">Size / Spec</th>
+                                    <th style="width: 14%; padding: 7px 4px; text-align: center; border: 1px solid #0f172a; font-size: 9pt;">Length (M)</th>
+                                    <th style="width: 12%; padding: 7px 4px; text-align: center; border: 1px solid #0f172a; font-size: 9pt;">Qty</th>
+                                    <th style="width: 32%; padding: 7px 8px; text-align: left; border: 1px solid #0f172a; font-size: 9pt;">International Standard</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -416,21 +536,32 @@
                         </table>
 
                         <!-- Signature Section -->
-                        <table style="border: none; margin-top: 30px;">
-                            <tr style="border: none;">
-                                <td style="border: 1px solid #cbd5e1; background-color: #f8fafc; width: 48%; vertical-align: top; padding: 12px;">
-                                    <b>Issued by / Engineer</b><br><br>
-                                    Name: ${engineerName}<br><br>
-                                    Signature: ${engHtml}
+                        <table cellpadding="0" cellspacing="0" style="width: 100%; border: none; margin-top: 16px;">
+                            <tr>
+                                <td style="width: 48%; border: 1px solid #cbd5e1; background-color: #f8fafc; vertical-align: top; padding: 10px 12px;">
+                                    <p style="font-size: 9.5pt; font-weight: bold; color: #1e293b; margin-bottom: 6px;">Issued by / Engineer</p>
+                                    <p style="font-size: 8.5pt; color: #64748b; margin-bottom: 4px;">Company: Carswell International Limited</p>
+                                    <p style="font-size: 9pt; color: #0f172a; margin-bottom: 10px;"><b>Name:</b> ${engineerName}</p>
+                                    <div style="border-top: 1px dashed #94a3b8; padding-top: 8px; text-align: center; height: 45px;">
+                                        ${engHtml}
+                                    </div>
                                 </td>
-                                <td style="border: none; width: 4%;"></td>
-                                <td style="border: 1px solid #cbd5e1; background-color: #f8fafc; width: 48%; vertical-align: top; padding: 12px;">
-                                    <b>Received by / Site Representative</b><br><br>
-                                    Name: ${receiverName}<br><br>
-                                    Signature: ${recHtml}
+                                <td style="width: 4%; border: none;"></td>
+                                <td style="width: 48%; border: 1px solid #cbd5e1; background-color: #f8fafc; vertical-align: top; padding: 10px 12px;">
+                                    <p style="font-size: 9.5pt; font-weight: bold; color: #1e293b; margin-bottom: 6px;">Received by / Site Representative</p>
+                                    <p style="font-size: 8.5pt; color: #64748b; margin-bottom: 4px;">Site: FTS Site (發祥街地盤)</p>
+                                    <p style="font-size: 9pt; color: #0f172a; margin-bottom: 10px;"><b>Representative:</b> ${receiverName}</p>
+                                    <div style="border-top: 1px dashed #94a3b8; padding-top: 8px; text-align: center; height: 45px;">
+                                        ${recHtml}
+                                    </div>
                                 </td>
                             </tr>
                         </table>
+
+                        <!-- Footer Note -->
+                        <p style="text-align: center; font-size: 8pt; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 18px;">
+                            This document is automatically generated by Carswell International Limited System • Applicable to Towngas FTS Site Project
+                        </p>
                     </div>
                 </body>
                 </html>
